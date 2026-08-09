@@ -53,6 +53,10 @@ def convert_to_mp3(url: str) -> ConversionResult:
             "quiet": True,
             "no_warnings": True,
             "restrictfilenames": True,
+            # Prefer YouTube's mobile-app API over the website — it's less
+            # aggressively bot-checked, so this often avoids needing cookies
+            # at all on cloud hosts. Falls back to the web client if it fails.
+            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         }
 
         cookies_file = os.environ.get("YTDLP_COOKIES_FILE")
