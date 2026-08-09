@@ -96,6 +96,11 @@ def convert_to_mp3(url: str) -> ConversionResult:
             "quiet": True,
             "no_warnings": True,
             "restrictfilenames": True,
+            # YouTube's newer PO Token requirement blocks even cookie-
+            # authenticated requests from datacenter IPs on the web/android
+            # clients. The tv client uses a different auth flow that has
+            # (so far) avoided that gate; falls back to web if it changes.
+            "extractor_args": {"youtube": {"player_client": ["tv", "web"]}},
         }
 
         cookies_file = _resolve_cookies_file()
