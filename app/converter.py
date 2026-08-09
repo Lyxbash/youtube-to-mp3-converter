@@ -28,6 +28,37 @@ class ConversionResult:
     mimetype: str = "audio/mpeg"
 
 
+_cookies_file_cache = None
+
+
+def _resolve_cookies_file() -> str | None:
+    """Find a cookies.txt to authenticate yt-dlp with, if one is configured.
+
+    Supports either a path to an already-present file (YTDLP_COOKIES_FILE,
+    e.g. a Render Secret File) or the file's raw contents pasted directly
+    into an environment variable (YTDLP_COOKIES_CONTENT), which is written
+    to a temp file once and reused for the life of the process.
+    """
+    global _cookies_file_cache
+    if _cookies_file_cache and os.path.isfile(_cookies_file_cache):
+        return _cookies_file_cache
+
+    explicit_path = os.environ.get("YTDLP_COOKIES_FILE")
+    if explicit_path and os.path.isfile(explicit_path):
+        _cookies_file_cache = explicit_path
+        return _cookies_file_cache
+
+    content = os.environ.get("YTDLP_COOKIES_CONTENT")
+    if content:
+        fd, path = tempfile.mkstemp(prefix="ytdlp_cookies_", suffix=".txt")
+        with os.fdopen(fd, "w") as f:
+            f.write(content)
+        _cookies_file_cache = path
+        return _cookies_file_cache
+
+    return None
+
+
 def convert_to_mp3(url: str) -> ConversionResult:
     """Download a single YouTube video's audio and transcode it to MP3.
 
@@ -59,8 +90,8 @@ def convert_to_mp3(url: str) -> ConversionResult:
             "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         }
 
-        cookies_file = os.environ.get("YTDLP_COOKIES_FILE")
-        if cookies_file and os.path.isfile(cookies_file):
+        cookies_file = _resolve_cookies_file()
+        if cookies_file:
             ydl_opts["cookiefile"] = cookies_file
 
         try:

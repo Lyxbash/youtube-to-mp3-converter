@@ -125,12 +125,18 @@ as your own YouTube account via exported browser cookies:
    "Get cookies.txt LOCALLY" (Chrome/Firefox).
 2. **Never commit this file to git** — it's equivalent to a login token for
    your Google account.
-3. On Render: your service → **Environment** → **Secret Files** → add a file
-   with path `/etc/secrets/cookies.txt`, paste the exported contents.
-4. Add an environment variable `YTDLP_COOKIES_FILE=/etc/secrets/cookies.txt`.
-5. Redeploy. The app automatically uses the cookie file whenever that
-   environment variable points at a file that exists — no code changes
-   needed either way.
+3. Get the contents into Render one of two ways:
+   - **Environment variable (recommended — simplest, no known issues):**
+     open the downloaded `cookies.txt` in a text editor, copy the entire
+     contents, and add an environment variable `YTDLP_COOKIES_CONTENT` on
+     Render with that as the value.
+   - **Secret File (alternative):** your service → **Environment** →
+     **Secret Files** → add a file with path `/etc/secrets/cookies.txt`,
+     paste the contents, then add `YTDLP_COOKIES_FILE=/etc/secrets/cookies.txt`
+     instead. If Render's Secret Files UI errors out when saving, just use
+     the environment variable option above — it does the same thing.
+4. Redeploy. The app automatically picks up either variable — no code
+   changes needed.
 
 These cookies expire eventually (e.g. if you sign out everywhere or change
 your Google password) and will need re-exporting when that happens.
