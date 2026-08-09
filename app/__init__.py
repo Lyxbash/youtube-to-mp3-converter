@@ -1,3 +1,4 @@
+import logging
 import os
 import secrets
 
@@ -5,6 +6,8 @@ from flask import Flask
 
 
 def create_app() -> Flask:
+    logging.basicConfig(level=logging.INFO)
+
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     app = Flask(
         __name__,

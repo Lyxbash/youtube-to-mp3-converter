@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import tempfile
@@ -8,6 +9,8 @@ import yt_dlp
 from yt_dlp.utils import sanitize_filename
 
 from app.errors import ConversionError, DownloadFailedError, VideoUnavailableError
+
+logger = logging.getLogger(__name__)
 
 _UNAVAILABLE_MARKERS = (
     "private video",
@@ -92,7 +95,24 @@ def convert_to_mp3(url: str) -> ConversionResult:
 
         cookies_file = _resolve_cookies_file()
         if cookies_file:
+            with open(cookies_file) as f:
+                cookie_count = sum(
+                    1 for line in f if line.strip() and not line.startswith("#")
+                )
+            logger.info(
+                "Using cookies file %s with %d cookie entries", cookies_file, cookie_count
+            )
+            if cookie_count == 0:
+                logger.warning(
+                    "Cookies file resolved but contains 0 usable entries - "
+                    "check YTDLP_COOKIES_CONTENT/YTDLP_COOKIES_FILE for formatting issues"
+                )
             ydl_opts["cookiefile"] = cookies_file
+        else:
+            logger.warning(
+                "No YouTube cookies configured "
+                "(neither YTDLP_COOKIES_FILE nor YTDLP_COOKIES_CONTENT is set)"
+            )
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
