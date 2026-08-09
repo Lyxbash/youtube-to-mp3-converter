@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouTube to MP3</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="card">
+    <h1>YouTube &rarr; MP3</h1>
+    <p class="subtitle">Paste a YouTube video link, get the audio as an MP3.</p>
+
+    <form id="convert-form">
+      <input
+        type="url"
+        id="url-input"
+        name="url"
+        placeholder="https://www.youtube.com/watch?v=..."
+        autocomplete="off"
+        required
+      >
+      <button type="submit" id="convert-btn">Convert to MP3</button>
+    </form>
+
+    <p id="status" class="status" hidden></p>
+    <p id="error" class="error" hidden></p>
+
+    <p class="disclaimer">
+      For personal use only. You're responsible for complying with YouTube's
+      Terms of Service and applicable copyright law.
+    </p>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
