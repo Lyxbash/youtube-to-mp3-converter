@@ -1,8 +1,19 @@
 import io
 
-from flask import Blueprint, current_app, jsonify, render_template, request, send_file
+from flask import (
+    Blueprint,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 from werkzeug.exceptions import HTTPException
 
+from app.auth import check_password, login_required
 from app.converter import convert_to_mp3
 from app.errors import (
     ConversionAppError,
@@ -24,6 +35,7 @@ _ERROR_STATUS = {
 
 
 @bp.get("/")
+@login_required
 def index():
     return render_template("index.html")
 
@@ -33,7 +45,27 @@ def healthz():
     return jsonify(status="ok")
 
 
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        if check_password(request.form.get("password", "")):
+            session.clear()
+            session["authenticated"] = True
+            session.permanent = True
+            return redirect(request.args.get("next") or url_for("main.index"))
+        error = "Incorrect password."
+    return render_template("login.html", error=error)
+
+
+@bp.get("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("main.login"))
+
+
 @bp.post("/api/convert")
+@login_required
 def convert():
     payload = request.get_json(silent=True) or {}
     url = payload.get("url", "")

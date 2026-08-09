@@ -8,7 +8,10 @@
 </head>
 <body>
   <main class="card">
-    <h1>YouTube &rarr; MP3</h1>
+    <div class="top-row">
+      <h1>YouTube &rarr; MP3</h1>
+      <a href="{{ url_for('main.logout') }}" class="logout-link">Sign out</a>
+    </div>
     <p class="subtitle">Paste a YouTube video link, get the audio as an MP3.</p>
 
     <form id="convert-form">

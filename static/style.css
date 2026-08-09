@@ -39,6 +39,25 @@ h1 {
   font-size: 1.5rem;
 }
 
+.top-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logout-link {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.logout-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 .subtitle {
   margin: 0 0 1.5rem;
   color: var(--muted);
@@ -51,7 +70,8 @@ form {
   gap: 0.75rem;
 }
 
-input[type="url"] {
+input[type="url"],
+input[type="password"] {
   padding: 0.75rem 1rem;
   border-radius: 8px;
   border: 1px solid #333844;
@@ -60,7 +80,8 @@ input[type="url"] {
   font-size: 1rem;
 }
 
-input[type="url"]:focus {
+input[type="url"]:focus,
+input[type="password"]:focus {
   outline: 2px solid var(--accent);
 }
 

@@ -60,6 +60,11 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({ url }),
     });
 
+    if (response.status === 401) {
+      window.location.href = "/login";
+      return;
+    }
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       setError(data.error || "Something went wrong during conversion.");

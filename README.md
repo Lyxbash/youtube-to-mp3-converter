@@ -40,7 +40,32 @@ Open http://localhost:5000 — ffmpeg and all dependencies are baked into the im
 ## Limitations
 
 - One video at a time — playlist URLs are accepted but only the single video is converted.
-- No authentication, no multi-user job queue — this is a personal-use tool.
+- Single-password login, no multi-user accounts or job queue — this is a personal-use tool.
+
+## Access control
+
+The app is gated behind a single shared password (there are no separate user
+accounts — this is meant for one person). Set it via an environment variable:
+
+```bash
+APP_PASSWORD=choose-a-strong-password
+```
+
+If `APP_PASSWORD` is not set, the app runs with **no authentication** — fine
+for local-only use, but it logs a warning on startup and you should always
+set it for any publicly reachable deployment (e.g. Render).
+
+Also set `SECRET_KEY` to a long random string (e.g. `python -c "import secrets; print(secrets.token_hex(32))"`)
+so login sessions survive app restarts/redeploys instead of logging you out
+each time:
+
+```bash
+SECRET_KEY=<random-hex-string>
+```
+
+On Render, add both as environment variables under your service's
+**Environment** tab. Cookie security (`Secure` flag) is enabled automatically
+whenever the app detects it's running on Render.
 
 ## Deploying to the cloud (e.g. Render)
 
