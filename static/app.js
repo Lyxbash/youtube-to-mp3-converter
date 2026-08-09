@@ -3,6 +3,13 @@ const urlInput = document.getElementById("url-input");
 const convertBtn = document.getElementById("convert-btn");
 const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
+const previewEl = document.getElementById("preview");
+const previewTitleEl = document.getElementById("preview-title");
+const previewPlayer = document.getElementById("preview-player");
+const downloadBtn = document.getElementById("download-btn");
+
+let currentObjectUrl = null;
+let currentFilename = "audio.mp3";
 
 function setStatus(message) {
   statusEl.textContent = message;
@@ -20,9 +27,20 @@ function filenameFromContentDisposition(header, fallback) {
   return match ? match[1] : fallback;
 }
 
+function resetPreview() {
+  previewEl.hidden = true;
+  previewPlayer.pause();
+  previewPlayer.removeAttribute("src");
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   setError("");
+  resetPreview();
 
   const url = urlInput.value.trim();
   try {
@@ -49,24 +67,31 @@ form.addEventListener("submit", async (event) => {
     }
 
     const blob = await response.blob();
-    const filename = filenameFromContentDisposition(
+    currentFilename = filenameFromContentDisposition(
       response.headers.get("Content-Disposition"),
       "audio.mp3"
     );
+    currentObjectUrl = URL.createObjectURL(blob);
 
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = objectUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(objectUrl);
+    previewTitleEl.textContent = currentFilename;
+    previewPlayer.src = currentObjectUrl;
+    previewEl.hidden = false;
 
-    setStatus("Done — your download should start automatically.");
+    setStatus("Done — preview it below, then download when you're ready.");
   } catch {
     setError("Couldn't reach the server. Check your connection and try again.");
   } finally {
     convertBtn.disabled = false;
   }
+});
+
+downloadBtn.addEventListener("click", () => {
+  if (!currentObjectUrl) return;
+
+  const link = document.createElement("a");
+  link.href = currentObjectUrl;
+  link.download = currentFilename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 });

@@ -97,6 +97,35 @@ button:disabled {
   font-size: 0.9rem;
 }
 
+.preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #333844;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preview-title {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.preview audio {
+  width: 100%;
+}
+
+#download-btn {
+  background: #2f9e44;
+}
+
+#download-btn:hover:not(:disabled) {
+  background: #268a3a;
+}
+
 .disclaimer {
   margin: 1.5rem 0 0;
   color: var(--muted);
