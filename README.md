@@ -137,6 +137,23 @@ account via exported browser cookies is the fix:
 These cookies expire eventually (e.g. if you sign out everywhere or change
 your Google password) and will need re-exporting when that happens.
 
+## Troubleshooting: "Requested format is not available" in the logs
+
+This is a different problem from the bot-detection one above (check Render's
+**Logs** tab to see which error is actually happening — the UI message is
+the same generic text for both, deliberately, so it doesn't leak internals
+to whoever's using the app). A "Requested format is not available" error
+even with valid cookies loaded usually means the installed `yt-dlp` version
+is out of date: YouTube changes its internals often enough that yt-dlp ships
+frequent fixes, and Docker's build cache means Render can keep reusing an old
+`pip install` layer across deploys if `requirements.txt` hasn't changed —
+so a version that worked when you first deployed can silently go stale.
+
+Fix: on Render, use the dropdown next to **Manual Deploy** and choose
+**"Clear build cache & deploy"** to force a genuinely fresh install of the
+current yt-dlp release. `requirements.txt` intentionally leaves `yt-dlp`
+unpinned so a fresh install always grabs the latest version.
+
 ## Limitations
 
 - One video at a time — playlist URLs are accepted but only the single video

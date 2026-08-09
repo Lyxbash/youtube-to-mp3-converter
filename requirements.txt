@@ -1,3 +1,8 @@
 Flask==3.0.*
-yt-dlp>=2024.1.1
+# Intentionally unpinned: YouTube changes frequently break older yt-dlp
+# releases, and Docker layer caching means a version pin here only gets
+# re-resolved when this file's contents change. If downloads that used to
+# work start failing, touch this file (or bump the version below) and
+# redeploy to force a fresh install of the latest release.
+yt-dlp
 gunicorn==22.*
