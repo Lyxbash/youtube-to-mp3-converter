@@ -130,9 +130,21 @@ the POT server yourself; see that project's README.
 
 Authenticating as your own YouTube account via exported browser cookies:
 
-1. While logged into youtube.com in your normal browser, export cookies to a
-   Netscape-format `cookies.txt` file. Easiest way: a browser extension like
-   "Get cookies.txt LOCALLY" (Chrome/Firefox).
+1. Export the cookies **the right way, or they'll be invalidated within
+   minutes.** Google rotates (invalidates) cookies when it sees the same
+   *active* browser session's cookies being used from a different IP — like
+   Render's — as a security measure. The logs then show *"The provided
+   YouTube account cookies are no longer valid... they have likely been
+   rotated"* and downloads fail. To get cookies Google won't immediately
+   rotate:
+   - Open a **new Incognito/Private window** and log into youtube.com.
+   - Open **one** video to confirm you're logged in.
+   - Export cookies for `youtube.com` with the "Get cookies.txt LOCALLY"
+     extension (Chrome/Firefox) → a Netscape-format `cookies.txt`.
+   - **Close the Incognito window immediately** (do *not* log out — closing
+     without logging out keeps the session valid; logging out kills it).
+   This gives a session that isn't "live" in an open browser, so Google
+   leaves it alone.
 2. **Never commit this file to git** — it's equivalent to a login token for
    your Google account.
 3. Get the contents into Render one of two ways (pick one, don't mix them up
@@ -151,7 +163,9 @@ Authenticating as your own YouTube account via exported browser cookies:
    changes needed.
 
 These cookies expire eventually (e.g. if you sign out everywhere or change
-your Google password) and will need re-exporting when that happens.
+your Google password) and will need re-exporting when that happens. If
+downloads suddenly start failing again with the "cookies are no longer
+valid" warning in the logs, re-export using the Incognito method above.
 
 ## Troubleshooting: "Requested format is not available" in the logs
 
