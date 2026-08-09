@@ -130,19 +130,15 @@ def convert_to_mp3(url: str) -> ConversionResult:
 
         # yt-dlp needs a JavaScript runtime to solve YouTube's "n" signature
         # challenge; without it, format URLs can't be deciphered and only
-        # storyboard images remain. Deno is yt-dlp's supported solver runtime
-        # (node is "unsupported" for it), so prefer deno; node stays available
-        # for the POT provider.
-        runtimes = {}
-        if shutil.which("deno"):
-            runtimes["deno"] = {}
+        # storyboard images remain. Node >= 22 is supported for this (and also
+        # backs the POT provider). We standardise on Node rather than Deno:
+        # when Deno is also present, the bgutil plugin probes a Deno code path
+        # that hangs and times out during extraction.
         if shutil.which("node"):
-            runtimes["node"] = {}
-        if runtimes:
-            ydl_opts["js_runtimes"] = runtimes
-            logger.info("yt-dlp JS runtimes enabled: %s", ", ".join(runtimes))
+            ydl_opts["js_runtimes"] = {"node": {}}
+            logger.info("Using node as yt-dlp JS runtime")
         else:
-            logger.info("No JS runtime (deno/node) found for yt-dlp")
+            logger.info("node not found; yt-dlp has no JS runtime available")
 
         # YouTube now demands a proof-of-origin (PO) token from datacenter
         # IPs even with valid cookies. The bgutil POT-provider plugin mints

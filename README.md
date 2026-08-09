@@ -105,7 +105,7 @@ automatically once the app detects it's running on Render (HTTPS).
 takes 30-60 seconds to wake up on the next request. That's normal — the link
 still always works, the first request after a while is just slower.
 
-## Why cloud hosting needs extra setup (cookies + PO token + Deno)
+## Why cloud hosting needs extra setup (cookies + PO token + JS runtime)
 
 YouTube actively blocks downloads from datacenter/cloud IP ranges (like
 Render's) that it doesn't see as real browsers. Getting a download through on
@@ -121,14 +121,15 @@ first requires any action from you; the image handles the other two:
    (a small Node service built into the Docker image) which yt-dlp calls
    automatically. Wired up via the `BGUTIL_SERVER_HOME` env var the Dockerfile
    sets for you.
-3. **A JavaScript runtime (Deno)** *(built in)* — YouTube protects format URLs
-   with a signature challenge yt-dlp solves using Deno (its supported runtime
-   for this). The Dockerfile installs it; the app auto-detects and uses it.
+3. **A JavaScript runtime (Node.js 22)** *(built in)* — YouTube protects format
+   URLs with an "n" signature challenge yt-dlp solves using a JS runtime, which
+   must be Node >= 22 (Node 20 is rejected as "unsupported"). The same Node
+   install that runs the POT provider handles this; the app auto-detects it.
 
 On a local run from a home IP, none of this is needed — the provider stays
 inactive and downloads work without the extra machinery. If you host
 somewhere other than via this Dockerfile, you'd need to supply the POT server
-and Deno yourself.
+and a Node >= 22 runtime yourself.
 
 ### Setting up cookies
 
@@ -181,10 +182,9 @@ means yt-dlp couldn't turn the video's available formats into downloadable
 URLs. Two common causes, both handled by this image:
 
 1. **Missing/unsupported JS runtime.** YouTube protects format URLs with an
-   "n signature" challenge that yt-dlp solves using a JavaScript runtime.
-   yt-dlp's supported solver runtime is **Deno** (plain Node is reported as
-   "unsupported" for this), so the Docker image installs Deno and the app
-   points yt-dlp at it. In the logs, `JS runtimes: deno-<ver>` with no
+   "n signature" challenge that yt-dlp solves using a JavaScript runtime. It
+   requires **Node.js >= 22** (Node 20 is reported as "unsupported"), which
+   the Docker image installs. In the logs, `JS runtimes: node-<ver>` with no
    "(unsupported)" next to it means this is working; `n challenge solving
    failed` followed by "Only images are available" means it isn't.
 2. **Stale yt-dlp.** YouTube changes internals often and yt-dlp ships
@@ -194,8 +194,8 @@ URLs. Two common causes, both handled by this image:
 
 Fix for either: on Render, use the dropdown next to **Manual Deploy** and
 choose **"Clear build cache & deploy"** to rebuild the image fresh (new
-yt-dlp, Deno, and POT provider). `requirements.txt` intentionally leaves
-`yt-dlp` unpinned so a fresh install always grabs the latest version.
+yt-dlp, Node runtime, and POT provider). `requirements.txt` intentionally
+leaves `yt-dlp` unpinned so a fresh install always grabs the latest version.
 
 ## Limitations
 
