@@ -105,14 +105,30 @@ automatically once the app detects it's running on Render (HTTPS).
 takes 30-60 seconds to wake up on the next request. That's normal — the link
 still always works, the first request after a while is just slower.
 
-## Troubleshooting: "Couldn't reach YouTube"
+## Why cloud hosting needs extra setup (cookies + PO token provider)
 
-This means YouTube itself rejected the download request — it detected the
-server's IP as a datacenter/bot IP rather than a real browser. This is
-unrelated to the app's login password; it happens regardless of who's signed
-in, and on a cloud host (e.g. Render) it will happen on essentially every
-request unless cookies are configured. Authenticating as your own YouTube
-account via exported browser cookies is the fix:
+YouTube actively blocks downloads from datacenter/cloud IP ranges (like
+Render's) that it doesn't see as real browsers. Defeating that on a cloud
+host takes **two** things working together — this is unrelated to the app's
+login password, and happens regardless of who's signed in:
+
+1. **Cookies** — authenticating as your own logged-in YouTube account (setup
+   below).
+2. **A PO (proof-of-origin) token provider** — YouTube additionally demands a
+   cryptographic token from datacenter IPs *even with valid cookies*. This
+   image bundles the [bgutil POT provider](https://github.com/Brainicism/bgutil-ytdlp-pot-provider)
+   (a small Node service built into the Docker image) which yt-dlp calls
+   automatically to mint those tokens. It requires no configuration — it's
+   wired up via the `BGUTIL_SERVER_HOME` env var, which the Dockerfile sets
+   for you. On a local run from a home IP, none of this is needed and the
+   provider stays inactive.
+
+If you host somewhere other than via this Dockerfile, you'd need to provide
+the POT server yourself; see that project's README.
+
+### Setting up cookies
+
+Authenticating as your own YouTube account via exported browser cookies:
 
 1. While logged into youtube.com in your normal browser, export cookies to a
    Netscape-format `cookies.txt` file. Easiest way: a browser extension like

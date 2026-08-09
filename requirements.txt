@@ -5,4 +5,8 @@ Flask==3.0.*
 # work start failing, touch this file (or bump the version below) and
 # redeploy to force a fresh install of the latest release.
 yt-dlp
+# PO token provider plugin — pinned to match the Node server built in the
+# Dockerfile (BGUTIL_VERSION); the two must be the same release to stay
+# compatible.
+bgutil-ytdlp-pot-provider==1.3.1
 gunicorn==22.*

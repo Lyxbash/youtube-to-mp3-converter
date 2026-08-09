@@ -96,12 +96,22 @@ def convert_to_mp3(url: str) -> ConversionResult:
             "quiet": True,
             "no_warnings": True,
             "restrictfilenames": True,
-            # YouTube's newer PO Token requirement blocks even cookie-
-            # authenticated requests from datacenter IPs on the web/android
-            # clients. The tv client uses a different auth flow that has
-            # (so far) avoided that gate; falls back to web if it changes.
-            "extractor_args": {"youtube": {"player_client": ["tv", "web"]}},
         }
+
+        # YouTube now demands a proof-of-origin (PO) token from datacenter
+        # IPs even with valid cookies. The bgutil POT-provider plugin mints
+        # those tokens by shelling out to its bundled Node server, whose
+        # location is passed here. Only enabled when that server is actually
+        # present (it's built into the Docker image, absent for local runs
+        # from a home IP that don't need a PO token in the first place).
+        bgutil_home = os.environ.get("BGUTIL_SERVER_HOME")
+        if bgutil_home and os.path.isdir(bgutil_home):
+            logger.info("PO token provider enabled (bgutil server at %s)", bgutil_home)
+            ydl_opts["extractor_args"] = {
+                "youtubepot-bgutilscript": {"server_home": [bgutil_home]}
+            }
+        else:
+            logger.info("PO token provider not configured (BGUTIL_SERVER_HOME unset)")
 
         cookies_file = _resolve_cookies_file()
         if cookies_file:
