@@ -128,15 +128,21 @@ def convert_to_mp3(url: str) -> ConversionResult:
             ydl_opts["verbose"] = True
             ydl_opts["quiet"] = False
 
-        # yt-dlp needs a JavaScript runtime for YouTube signature/nsig
-        # deciphering and extraction; it only auto-enables deno, but our
-        # Docker image ships Node (for the POT provider). Point yt-dlp at
-        # node when present so it isn't left with no runtime at all.
+        # yt-dlp needs a JavaScript runtime to solve YouTube's "n" signature
+        # challenge; without it, format URLs can't be deciphered and only
+        # storyboard images remain. Deno is yt-dlp's supported solver runtime
+        # (node is "unsupported" for it), so prefer deno; node stays available
+        # for the POT provider.
+        runtimes = {}
+        if shutil.which("deno"):
+            runtimes["deno"] = {}
         if shutil.which("node"):
-            ydl_opts["js_runtimes"] = {"node": {}}
-            logger.info("Using node as yt-dlp JS runtime")
+            runtimes["node"] = {}
+        if runtimes:
+            ydl_opts["js_runtimes"] = runtimes
+            logger.info("yt-dlp JS runtimes enabled: %s", ", ".join(runtimes))
         else:
-            logger.info("node not found; yt-dlp has no JS runtime available")
+            logger.info("No JS runtime (deno/node) found for yt-dlp")
 
         # YouTube now demands a proof-of-origin (PO) token from datacenter
         # IPs even with valid cookies. The bgutil POT-provider plugin mints

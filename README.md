@@ -105,26 +105,30 @@ automatically once the app detects it's running on Render (HTTPS).
 takes 30-60 seconds to wake up on the next request. That's normal — the link
 still always works, the first request after a while is just slower.
 
-## Why cloud hosting needs extra setup (cookies + PO token provider)
+## Why cloud hosting needs extra setup (cookies + PO token + Deno)
 
 YouTube actively blocks downloads from datacenter/cloud IP ranges (like
-Render's) that it doesn't see as real browsers. Defeating that on a cloud
-host takes **two** things working together — this is unrelated to the app's
-login password, and happens regardless of who's signed in:
+Render's) that it doesn't see as real browsers. Getting a download through on
+a cloud host takes **three** things working together — all unrelated to the
+app's login password, and needed regardless of who's signed in. Only the
+first requires any action from you; the image handles the other two:
 
-1. **Cookies** — authenticating as your own logged-in YouTube account (setup
-   below).
-2. **A PO (proof-of-origin) token provider** — YouTube additionally demands a
+1. **Cookies** *(you set these up)* — authenticating as your own logged-in
+   YouTube account (setup below).
+2. **A PO (proof-of-origin) token provider** *(built in)* — YouTube demands a
    cryptographic token from datacenter IPs *even with valid cookies*. This
    image bundles the [bgutil POT provider](https://github.com/Brainicism/bgutil-ytdlp-pot-provider)
    (a small Node service built into the Docker image) which yt-dlp calls
-   automatically to mint those tokens. It requires no configuration — it's
-   wired up via the `BGUTIL_SERVER_HOME` env var, which the Dockerfile sets
-   for you. On a local run from a home IP, none of this is needed and the
-   provider stays inactive.
+   automatically. Wired up via the `BGUTIL_SERVER_HOME` env var the Dockerfile
+   sets for you.
+3. **A JavaScript runtime (Deno)** *(built in)* — YouTube protects format URLs
+   with a signature challenge yt-dlp solves using Deno (its supported runtime
+   for this). The Dockerfile installs it; the app auto-detects and uses it.
 
-If you host somewhere other than via this Dockerfile, you'd need to provide
-the POT server yourself; see that project's README.
+On a local run from a home IP, none of this is needed — the provider stays
+inactive and downloads work without the extra machinery. If you host
+somewhere other than via this Dockerfile, you'd need to supply the POT server
+and Deno yourself.
 
 ### Setting up cookies
 
@@ -172,17 +176,26 @@ valid" warning in the logs, re-export using the Incognito method above.
 This is a different problem from the bot-detection one above (check Render's
 **Logs** tab to see which error is actually happening — the UI message is
 the same generic text for both, deliberately, so it doesn't leak internals
-to whoever's using the app). A "Requested format is not available" error
-even with valid cookies loaded usually means the installed `yt-dlp` version
-is out of date: YouTube changes its internals often enough that yt-dlp ships
-frequent fixes, and Docker's build cache means Render can keep reusing an old
-`pip install` layer across deploys if `requirements.txt` hasn't changed —
-so a version that worked when you first deployed can silently go stale.
+to whoever's using the app). With valid cookies and a PO token, this error
+means yt-dlp couldn't turn the video's available formats into downloadable
+URLs. Two common causes, both handled by this image:
 
-Fix: on Render, use the dropdown next to **Manual Deploy** and choose
-**"Clear build cache & deploy"** to force a genuinely fresh install of the
-current yt-dlp release. `requirements.txt` intentionally leaves `yt-dlp`
-unpinned so a fresh install always grabs the latest version.
+1. **Missing/unsupported JS runtime.** YouTube protects format URLs with an
+   "n signature" challenge that yt-dlp solves using a JavaScript runtime.
+   yt-dlp's supported solver runtime is **Deno** (plain Node is reported as
+   "unsupported" for this), so the Docker image installs Deno and the app
+   points yt-dlp at it. In the logs, `JS runtimes: deno-<ver>` with no
+   "(unsupported)" next to it means this is working; `n challenge solving
+   failed` followed by "Only images are available" means it isn't.
+2. **Stale yt-dlp.** YouTube changes internals often and yt-dlp ships
+   frequent fixes; Docker's build cache can keep reusing an old `pip install`
+   layer if `requirements.txt` hasn't changed, so a version that worked can
+   go stale.
+
+Fix for either: on Render, use the dropdown next to **Manual Deploy** and
+choose **"Clear build cache & deploy"** to rebuild the image fresh (new
+yt-dlp, Deno, and POT provider). `requirements.txt` intentionally leaves
+`yt-dlp` unpinned so a fresh install always grabs the latest version.
 
 ## Limitations
 
