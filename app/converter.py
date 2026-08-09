@@ -12,6 +12,27 @@ from app.errors import ConversionError, DownloadFailedError, VideoUnavailableErr
 
 logger = logging.getLogger(__name__)
 
+
+class _YtdlpLogger:
+    """Route yt-dlp's own messages into our logger so they show in host logs.
+
+    yt-dlp normally prints to stderr; funnelling through logging keeps its
+    warnings (e.g. PO-token generation failures) and, when verbose is on, its
+    debug output visible and consistently formatted in Render's log stream.
+    """
+
+    def debug(self, msg):
+        logger.info("yt-dlp: %s", msg)
+
+    def info(self, msg):
+        logger.info("yt-dlp: %s", msg)
+
+    def warning(self, msg):
+        logger.warning("yt-dlp: %s", msg)
+
+    def error(self, msg):
+        logger.error("yt-dlp: %s", msg)
+
 _UNAVAILABLE_MARKERS = (
     "private video",
     "sign in to confirm your age",
@@ -94,9 +115,18 @@ def convert_to_mp3(url: str) -> ConversionResult:
             ],
             "noplaylist": True,
             "quiet": True,
-            "no_warnings": True,
+            # Surface yt-dlp warnings (e.g. failed PO-token generation) via our
+            # logger so download failures are diagnosable from host logs.
+            "no_warnings": False,
             "restrictfilenames": True,
+            "logger": _YtdlpLogger(),
         }
+
+        # Set YTDLP_VERBOSE=1 to get yt-dlp's full debug trace (including PO
+        # token provider activity) in the logs when diagnosing a failure.
+        if os.environ.get("YTDLP_VERBOSE"):
+            ydl_opts["verbose"] = True
+            ydl_opts["quiet"] = False
 
         # YouTube now demands a proof-of-origin (PO) token from datacenter
         # IPs even with valid cookies. The bgutil POT-provider plugin mints
@@ -106,7 +136,24 @@ def convert_to_mp3(url: str) -> ConversionResult:
         # from a home IP that don't need a PO token in the first place).
         bgutil_home = os.environ.get("BGUTIL_SERVER_HOME")
         if bgutil_home and os.path.isdir(bgutil_home):
-            logger.info("PO token provider enabled (bgutil server at %s)", bgutil_home)
+            # The bgutil script provider needs this exact built file; if the
+            # Docker build didn't produce it, the provider registers as
+            # "unavailable" and yt-dlp silently proceeds with no PO token.
+            script_path = os.path.join(bgutil_home, "build", "generate_once.js")
+            script_ok = os.path.isfile(script_path)
+            logger.info(
+                "PO token provider enabled (bgutil server at %s); "
+                "generate_once.js present=%s",
+                bgutil_home,
+                script_ok,
+            )
+            if not script_ok:
+                logger.warning(
+                    "bgutil script %s is MISSING - PO tokens will not be "
+                    "generated. The Node build in the Docker image likely "
+                    "failed or output elsewhere.",
+                    script_path,
+                )
             ydl_opts["extractor_args"] = {
                 "youtubepot-bgutilscript": {"server_home": [bgutil_home]}
             }
