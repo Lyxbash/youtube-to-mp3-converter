@@ -35,12 +35,36 @@ Open http://localhost:5000 — ffmpeg and all dependencies are baked into the im
 
 1. Paste a single YouTube video URL (e.g. `https://www.youtube.com/watch?v=...` or `https://youtu.be/...`).
 2. Click **Convert to MP3**.
-3. The MP3 downloads automatically once conversion finishes.
+3. Once conversion finishes, preview the audio inline, then click **Download MP3** to save it.
 
 ## Limitations
 
 - One video at a time — playlist URLs are accepted but only the single video is converted.
 - No authentication, no multi-user job queue — this is a personal-use tool.
+
+## Deploying to the cloud (e.g. Render)
+
+YouTube blocks download requests from most cloud/datacenter IP ranges with a
+"Sign in to confirm you're not a bot" error. If you see that error (as
+`Couldn't reach YouTube...` in the UI, with the real reason in your host's
+logs), you need to authenticate yt-dlp with cookies from your own logged-in
+YouTube session:
+
+1. While logged into youtube.com in your browser, export your cookies to a
+   Netscape-format `cookies.txt` file. The easiest way is a browser
+   extension such as "Get cookies.txt LOCALLY" (Chrome/Firefox).
+2. **Do not commit this file to git** — it's equivalent to a session login
+   token for your Google account.
+3. On Render: go to your service → **Environment** → **Secret Files** → add
+   a file with path `/etc/secrets/cookies.txt` and paste the exported
+   contents.
+4. Add an environment variable `YTDLP_COOKIES_FILE=/etc/secrets/cookies.txt`.
+5. Redeploy. The app automatically uses the cookie file if that environment
+   variable is set and points at a file that exists — no code changes needed.
+
+Note: these cookies will eventually expire or get invalidated (e.g. if you
+sign out everywhere or change your password), and you'll need to re-export
+and re-upload them when that happens.
 
 ## Disclaimer
 

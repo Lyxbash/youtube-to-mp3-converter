@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -53,6 +54,10 @@ def convert_to_mp3(url: str) -> ConversionResult:
             "no_warnings": True,
             "restrictfilenames": True,
         }
+
+        cookies_file = os.environ.get("YTDLP_COOKIES_FILE")
+        if cookies_file and os.path.isfile(cookies_file):
+            ydl_opts["cookiefile"] = cookies_file
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:

@@ -43,8 +43,7 @@ def convert():
         result = convert_to_mp3(url)
     except ConversionAppError as exc:
         status = _ERROR_STATUS.get(type(exc), 500)
-        if status == 500:
-            current_app.logger.exception("Conversion failed")
+        current_app.logger.exception("Conversion failed (%s)", status)
         return jsonify(error=str(exc)), status
 
     return send_file(
