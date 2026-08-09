@@ -47,11 +47,20 @@ def _resolve_cookies_file() -> str | None:
         return _cookies_file_cache
 
     explicit_path = os.environ.get("YTDLP_COOKIES_FILE")
+    content = os.environ.get("YTDLP_COOKIES_CONTENT")
+    logger.info(
+        "Cookie env check: YTDLP_COOKIES_FILE=%s (exists=%s) YTDLP_COOKIES_CONTENT "
+        "is-set=%s length=%d",
+        explicit_path or "<unset>",
+        bool(explicit_path and os.path.isfile(explicit_path)),
+        content is not None,
+        len(content) if content else 0,
+    )
+
     if explicit_path and os.path.isfile(explicit_path):
         _cookies_file_cache = explicit_path
         return _cookies_file_cache
 
-    content = os.environ.get("YTDLP_COOKIES_CONTENT")
     if content:
         fd, path = tempfile.mkstemp(prefix="ytdlp_cookies_", suffix=".txt")
         with os.fdopen(fd, "w") as f:
