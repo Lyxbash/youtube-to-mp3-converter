@@ -16,11 +16,11 @@ _UNAVAILABLE_MARKERS = (
     "private video",
     "sign in to confirm your age",
     "age-restricted",
-    "unavailable",
-    "removed",
-    "not available",
-    "blocked it",
-    "copyright",
+    "video unavailable",
+    "this video is not available",
+    "removed by the uploader",
+    "not made this video available in your country",
+    "copyright claim",
 )
 
 
@@ -96,10 +96,6 @@ def convert_to_mp3(url: str) -> ConversionResult:
             "quiet": True,
             "no_warnings": True,
             "restrictfilenames": True,
-            # Prefer YouTube's mobile-app API over the website — it's less
-            # aggressively bot-checked, so this often avoids needing cookies
-            # at all on cloud hosts. Falls back to the web client if it fails.
-            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         }
 
         cookies_file = _resolve_cookies_file()

@@ -107,35 +107,31 @@ still always works, the first request after a while is just slower.
 
 ## Troubleshooting: "Couldn't reach YouTube"
 
-This means YouTube itself rejected the download request — usually because it
-detected the server's IP as a datacenter/bot IP rather than a real browser.
-This is unrelated to the app's login password; it happens regardless of who's
-signed in.
-
-The app already tries one workaround automatically, with no setup needed:
-it asks yt-dlp to impersonate YouTube's mobile-app API instead of the
-website, which is checked less aggressively (see `player_client` in
-`app/converter.py`). This resolves the problem in many cases on its own.
-
-**If it's still failing after that**, the reliable fallback is authenticating
-as your own YouTube account via exported browser cookies:
+This means YouTube itself rejected the download request — it detected the
+server's IP as a datacenter/bot IP rather than a real browser. This is
+unrelated to the app's login password; it happens regardless of who's signed
+in, and on a cloud host (e.g. Render) it will happen on essentially every
+request unless cookies are configured. Authenticating as your own YouTube
+account via exported browser cookies is the fix:
 
 1. While logged into youtube.com in your normal browser, export cookies to a
    Netscape-format `cookies.txt` file. Easiest way: a browser extension like
    "Get cookies.txt LOCALLY" (Chrome/Firefox).
 2. **Never commit this file to git** — it's equivalent to a login token for
    your Google account.
-3. Get the contents into Render one of two ways:
-   - **Environment variable (recommended — simplest, no known issues):**
-     open the downloaded `cookies.txt` in a text editor, copy the entire
-     contents, and add an environment variable `YTDLP_COOKIES_CONTENT` on
-     Render with that as the value.
-   - **Secret File (alternative):** your service → **Environment** →
-     **Secret Files** → add a file with path `/etc/secrets/cookies.txt`,
-     paste the contents, then add `YTDLP_COOKIES_FILE=/etc/secrets/cookies.txt`
-     instead. If Render's Secret Files UI errors out when saving, just use
-     the environment variable option above — it does the same thing.
-4. Redeploy. The app automatically picks up either variable — no code
+3. Get the contents into Render one of two ways (pick one, don't mix them up
+   — this is the single most common mistake):
+   - **`YTDLP_COOKIES_CONTENT` (recommended — simplest, no known issues):**
+     the *entire text contents* of `cookies.txt`, pasted directly as the
+     value of this environment variable.
+   - **`YTDLP_COOKIES_FILE` (alternative):** a *file path* — e.g.
+     `/etc/secrets/cookies.txt` — pointing at a Render **Secret File** you
+     uploaded separately under **Environment** → **Secret Files** containing
+     the cookie text. This variable's value must be the path, never the
+     cookie text itself. If Render's Secret Files UI errors out on upload,
+     just use `YTDLP_COOKIES_CONTENT` instead — it does the same job without
+     that extra step.
+4. Redeploy. The app automatically picks up whichever one you set — no code
    changes needed.
 
 These cookies expire eventually (e.g. if you sign out everywhere or change
